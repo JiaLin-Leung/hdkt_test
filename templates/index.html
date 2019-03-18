@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>家校互动</title>
+</head>
+<script src="http://cdn.bootcss.com/jquery/1.11.1/jquery.min.js"></script>
+
+<body>
+
+
+<div class="header" style="float: left;width: 100%;text-align: center" id="body">
+    <BUTTON class="button" onclick="get_class_list()" style="margin-bottom: 20px">
+        获取当前老师的班级
+    </BUTTON>
+
+    <div class="check">
+
+    </div>
+    <p style="margin-left: 10px;color: white;background: deepskyblue;padding: 3px;height: 20px;text-align: center">
+        发布选项</p>
+    <input type="radio" name="type" id="ra1" value="1" checked="checked">立即发送
+    <input type="radio" name="type" id="ra2" value="0">定时发送
+    <p>文字内容</p>
+    <input type="text" style="width: 300px;height: 100px;" id="content">
+    <p>署名：<span class="real_name" id="user_name"></span></p>
+    <p class="name"></p>
+
+    <input type="button" class="send_message" onclick="send_message()" value="发布"
+       style="margin-left: 10px;color: white;background: deepskyblue;padding: 3px;width: 100px; height: 30px;text-align: center;border-radius: 20px"/><br/>
+
+    <BUTTON class="button" onclick="message_list()" style="margin-bottom: 20px;margin-top: 30px">
+        获取老师已发送列表
+    </BUTTON>
+
+    <table>
+        <thead>
+        <tr>
+            <th class="hi_1">接收班级</th>
+            <th class="hi_2">发送时间</th>
+
+            <th class="hi_4">通知内容</th>
+            <th class="hi_3">状态</th>
+        </tr>
+        </thead>
+        <tbody class="tab" style="margin: 10px">
+
+        </tbody>
+
+    </table>
+
+</div>
+
+<script language="javascript" type="text/javascript">
+
+
+
+
+    function get_class_list() {
+        let post_data = {
+            "user_id": 274,
+        };
+        $.ajax({
+            url: 'http://127.0.0.1:8088/get_unit_name/',
+            type: "GET",
+            data: post_data,
+            success: function (data) {
+                if (data.response == "ok") {
+                    console.log(data.data);
+                    var data = data.data;
+                    $(".real_name").text(data.real_name);
+                    var str = "";
+                    for (var i = 0; i < data.unit_names.length; i++) {
+                        str += "<input type='button' value='" + data.unit_names[i].unit_name + "'style='margin-left: 20px;' unit_id='"+data.unit_names[i].unit_id+"'>"
+                    }
+                    $(".check").html(str);
+                    fun();
+                } else {
+                    $(".checklist").empty();
+                    alert("请求失败，请重试！");
+                }
+            }
+        });
+
+    }
+    function getNowFormatDate() {
+        var date = new Date();
+        var seperator1 = "-";
+        var seperator2 = ":";
+        var month = date.getMonth() + 1;
+        var strDate = date.getDate();
+        if (month >= 1 && month <= 9) {
+            month = "0" + month;
+        }
+        if (strDate >= 0 && strDate <= 9) {
+            strDate = "0" + strDate;
+        }
+        var currentdate = date.getFullYear() + seperator1 + month + seperator1 + strDate
+                + " " + date.getHours() + seperator2 + date.getMinutes()
+                + seperator2 + date.getSeconds();
+
+      return currentdate
+}
+
+
+    function fun() {
+        $('.check').on('click', 'input', function () {
+            var unit_id = $(this).attr('unit_id');
+            alert(unit_id);
+        })
+    }
+
+    /**
+     * 发短信
+     */
+    function send_message() {
+        var send_type=$('input[name="type"]:checked').val();
+        var temp = $('#content').val();
+        var time=getNowFormatDate();
+        let post_data = {
+            "content": temp,
+            "send_type":send_type,
+            "addusername":"dbj",
+            "classlist":"2824320",
+            "send_time":time,
+
+        };
+        $.ajax({
+            url: 'http://127.0.0.1:8088/send_message/',
+            type: "GET",
+            data: post_data,
+            success: function (data) {
+                if (data.response == "ok") {
+                    console.log(data.data);
+
+                } else {
+                    $(".checklist").empty();
+                    alert("请求失败，请重试！");
+                }
+            }
+        });
+    }
+
+    /**
+     * 已发送
+     */
+    function message_list() {
+        let post_data = {
+            "user_id": 274,
+        };
+        $.ajax({
+            url: 'http://127.0.0.1:8088/send_message_list/',
+            type: "GET",
+            data: post_data,
+            success: function (data) {
+                if (data.response == "ok") {
+                    var data = data.data.data;
+                    var str = "";
+                    for (var i = 0; i < data.length; i++) {
+                        str += "<tr>" +
+                            "<td>" +
+                             data[i].school_name+"</br/>"+data[i].unit_name+
+                            "</td>" +
+                            "<td>" +
+                            data[i].send_time+
+                            "</td>" +
+                            "<td>" +
+                             data[i].content+
+                            "</td>" +
+                            "<td>" +
+                             data[i].status_name+
+                            "</td>"
+                            + "</tr>";
+                    }
+                    $(".tab").html(str);
+
+                } else {
+                    $(".checklist").empty();
+                    alert("请求失败，请重试！");
+                }
+            }
+        });
+    }
+</script>
+</body>
+</html>
